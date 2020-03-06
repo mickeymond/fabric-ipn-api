@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { FileSystemWallet, Gateway } from 'fabric-network';
 import * as path from 'path';
 
@@ -38,7 +38,7 @@ export class CopyrightsService {
   
       return "Transaction has been submitted";
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -65,7 +65,7 @@ export class CopyrightsService {
   
       return JSON.parse(results.toString());
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 }
