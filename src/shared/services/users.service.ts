@@ -17,7 +17,7 @@ export class UsersService {
   private gateway: Gateway;
 
   constructor() {
-    this.walletPath = path.resolve(__dirname, "crypto", "wallet");
+    this.walletPath = path.resolve(process.cwd(), "dist", "crypto", "wallet");
     // Create a new file system based wallet for managing identities.
     this.wallet = new FileSystemWallet(this.walletPath);
     console.log(`Wallet path: ${this.walletPath}`);

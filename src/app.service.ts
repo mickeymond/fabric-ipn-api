@@ -8,7 +8,7 @@ import * as ccp from './crypto/connection.json';
 @Injectable()
 export class AppService {
   constructor() {
-    const walletPath = path.resolve(__dirname, "crypto", "wallet");
+    const walletPath = path.resolve(process.cwd(), "dist", "crypto", "wallet");
     // Create a new CA client for interacting with the CA.
     const caURL = ccp.certificateAuthorities["173.193.99.104:30669"].url;
     const ca = new FabricCAServices(caURL);
@@ -40,6 +40,7 @@ export class AppService {
               });
           })
           .catch(console.log);
-      });
+      })
+      .catch(console.log);
   }
 }

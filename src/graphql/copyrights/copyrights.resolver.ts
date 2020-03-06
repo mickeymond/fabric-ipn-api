@@ -10,7 +10,7 @@ export class CopyrightsResolver {
   ) {}
 
   @Query(() => [CopyrightType])
-  copyrights(): any {
+  async copyrights(): Promise<CopyrightType[]> {
     return this.copyrightsService.readCopyrights();
   }
 }

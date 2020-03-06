@@ -5,13 +5,13 @@ import { SharedModule } from '../shared/shared.module';
 
 @Module({
   imports: [
-    SharedModule,
     GraphQLModule.forRoot({
       autoSchemaFile: 'src/graphql/schema.gql',
       definitions: {
         path: 'src/graphql/graphql.ts',
       },
     }),
+    SharedModule,
   ],
   controllers: [],
   providers: [CopyrightsResolver],

@@ -3,6 +3,7 @@ import { FileSystemWallet, Gateway } from 'fabric-network';
 import * as path from 'path';
 
 import * as ccp from '../../crypto/connection.json';
+import { CopyrightType } from 'src/graphql/copyrights/dto/copyrights.dto.js';
 
 @Injectable()
 export class CopyrightsService {
@@ -11,8 +12,11 @@ export class CopyrightsService {
   private gateway: Gateway;
 
   constructor() {
-    this.walletPath = path.resolve(__dirname, "crypto", "wallet");
+    this.walletPath = path.resolve(process.cwd(), "dist", "crypto", "wallet");
+    // Create a new file system based wallet for managing identities.
     this.wallet = new FileSystemWallet(this.walletPath);
+    console.log(`Wallet path: ${this.walletPath}`);
+    // Create a new gateway for connecting to our peer node.
     this.gateway = new Gateway();
   }
 
@@ -42,7 +46,7 @@ export class CopyrightsService {
     }
   }
 
-  async readCopyrights() {
+  async readCopyrights(): Promise<CopyrightType[]> {
     try {
       // connect to gateway using admin credentials
       const gateway = new Gateway();
