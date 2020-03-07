@@ -20,7 +20,7 @@ export class CopyrightsService {
     this.gateway = new Gateway();
   }
 
-  async createCopyright(user, copyrightId, name) {
+  async createCopyright(user, data) {
     try {
       // connect to gateway with user credentials
       await this.gateway.connect(ccp, {
@@ -33,11 +33,11 @@ export class CopyrightsService {
       const network = await this.gateway.getNetwork("channel1");
   
       // Get the smart contract from the network channel.
-      const contract = network.getContract("demo-chain-ts");
+      const contract = network.getContract("fabric-ipn-contract");
   
       // Submit the 'createCar' transaction to the smart contract, and wait for it
       // to be committed to the ledger.
-      await contract.submitTransaction("createCopyright", copyrightId, name);
+      await contract.submitTransaction("createCopyright", JSON.stringify(data));
       this.gateway.disconnect();
   
       return "Transaction has been submitted";
@@ -60,7 +60,7 @@ export class CopyrightsService {
       const network = await gateway.getNetwork("channel1");
   
       // Get the smart contract from the network channel.
-      const contract = network.getContract("demo-chain-ts");
+      const contract = network.getContract("fabric-ipn-contract");
   
       // Submit the 'createCar' transaction to the smart contract, and wait for it
       // to be committed to the ledger.

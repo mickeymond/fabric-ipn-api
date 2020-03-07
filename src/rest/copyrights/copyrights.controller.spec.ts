@@ -1,20 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CopyrightsResolver } from './copyrights.resolver';
+import { CopyrightsController } from './copyrights.controller';
 import { SharedModule } from '../../shared/shared.module';
 
-describe('CopyrightsResolver', () => {
-  let resolver: CopyrightsResolver;
+describe('Copyrights Controller', () => {
+  let controller: CopyrightsController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [SharedModule],
-      providers: [CopyrightsResolver],
+      controllers: [CopyrightsController],
     }).compile();
 
-    resolver = module.get<CopyrightsResolver>(CopyrightsResolver);
+    controller = module.get<CopyrightsController>(CopyrightsController);
   });
 
   it('should be defined', () => {
-    expect(resolver).toBeDefined();
+    expect(controller).toBeDefined();
   });
 });
