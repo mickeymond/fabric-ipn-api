@@ -4,13 +4,16 @@ import { FileSystemWallet, X509WalletMixin } from 'fabric-network';
 import * as path from 'path';
 
 import * as ccp from './crypto/connection.json';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AppService {
-  constructor() {
+  constructor(
+    private readonly configService: ConfigService
+  ) {
     const walletPath = path.resolve(process.cwd(), "dist", "crypto", "wallet");
     // Create a new CA client for interacting with the CA.
-    const caURL = ccp.certificateAuthorities["173.193.99.104:30669"].url;
+    const caURL = ccp.certificateAuthorities["Org1CA"].url;
     const ca = new FabricCAServices(caURL);
 
     // Create a new file system based wallet for managing identities.
@@ -29,7 +32,7 @@ export class AppService {
         ca.enroll({ enrollmentID: "admin", enrollmentSecret: "adminpw" })
           .then(enrollment => {
             const identity = X509WalletMixin.createIdentity(
-              "org1msp",
+              this.configService.get<string>('MSP_ID'),
               enrollment.certificate,
               enrollment.key.toBytes()
             );

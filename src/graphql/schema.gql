@@ -3,10 +3,22 @@
 # !!!   DO NOT MODIFY THIS FILE BY YOURSELF   !!!
 # -----------------------------------------------
 
+type AuthorType {
+  name: String!
+  contribution: String!
+  authorship: String!
+  dateOfBirth: String!
+  dateOfDeath: String!
+  nationality: String!
+}
+
 type CopyrightType {
   id: String!
-  name: String!
-  owner: String!
+  title: String!
+  altTitles: [String!]!
+  authors: [AuthorType!]!
+  creationDate: String!
+  publicationDate: String!
 }
 
 type Query {

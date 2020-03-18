@@ -11,6 +11,6 @@ export class CopyrightsResolver {
 
   @Query(() => [CopyrightType])
   async copyrights(): Promise<CopyrightType[]> {
-    return this.copyrightsService.readCopyrights();
+    return this.copyrightsService.readCopyrights({ enrollmentId: 'testuser' });
   }
 }

@@ -2,13 +2,17 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
-  InternalServerErrorException
+  InternalServerErrorException,
+  UnauthorizedException
 } from '@nestjs/common';
 import * as FabricCAServices from 'fabric-ca-client';
 import { FileSystemWallet, X509WalletMixin, Gateway } from 'fabric-network';
 import * as path from 'path';
+import { ConfigService } from '@nestjs/config';
 
 import * as ccp from '../../crypto/connection.json';
+import { IUserInput, IUserType } from '../interfaces/user.interface';
+import { generateToken } from '../../utils/jwtHelpers';
 
 @Injectable()
 export class UsersService {
@@ -16,29 +20,30 @@ export class UsersService {
   private wallet: FileSystemWallet;
   private gateway: Gateway;
 
-  constructor() {
+  constructor(
+    private readonly configService: ConfigService
+  ) {
     this.walletPath = path.resolve(process.cwd(), "dist", "crypto", "wallet");
     // Create a new file system based wallet for managing identities.
     this.wallet = new FileSystemWallet(this.walletPath);
-    console.log(`Wallet path: ${this.walletPath}`);
     // Create a new gateway for connecting to our peer node.
     this.gateway = new Gateway();
   }
 
-  async register(user, secret) {
+  async register({ enrollmentId, enrollmentSecret }: IUserInput) {
+    // Check to see if we've already enrolled the user.
+    const userExists = await this.wallet.exists(enrollmentId);
+    if (userExists) {
+      throw new ConflictException("An identity for the user " + enrollmentId + " already exists in the wallet");
+    }
+
+    // Check to see if we've already enrolled the admin user.
+    const adminExists = await this.wallet.exists("admin");
+    if (!adminExists) {
+      throw new NotFoundException('An identity for the admin user "admin" does not exist in the wallet');
+    }
+
     try {  
-      // Check to see if we've already enrolled the user.
-      const userExists = await this.wallet.exists(user);
-      if (userExists) {
-        throw new ConflictException("An identity for the user " + user + " already exists in the wallet");
-      }
-  
-      // Check to see if we've already enrolled the admin user.
-      const adminExists = await this.wallet.exists("admin");
-      if (!adminExists) {
-        throw new NotFoundException('An identity for the admin user "admin" does not exist in the wallet');
-      }
-  
       // Connect Gateway to our peer node.
       await this.gateway.connect(ccp, {
         wallet: this.wallet,
@@ -53,8 +58,8 @@ export class UsersService {
       // Register the user and import the new identity into the wallet.
       await ca.register(
         {
-          enrollmentID: user,
-          enrollmentSecret: secret,
+          enrollmentID: enrollmentId,
+          enrollmentSecret: enrollmentSecret,
           role: "client",
           maxEnrollments: -1,
           affiliation: ''
@@ -62,54 +67,59 @@ export class UsersService {
         adminIdentity
       );
   
-      return `Successfully registered user ${user}`;
+      return `Successfully registered user ${enrollmentId}`;
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      throw new InternalServerErrorException(error.message);
     }
   }
 
-  async enroll(user, secret) {
+  async enroll({ enrollmentId, enrollmentSecret }: IUserInput) {
     try {
       // Create a new CA client for interacting with the CA.
-      const caURL = ccp.certificateAuthorities["173.193.99.104:30669"].url;
+      const caURL = ccp.certificateAuthorities["Org1CA"].url;
       const ca = new FabricCAServices(caURL);
   
       // Check to see if we've already enrolled the admin user.
-      const userExists = await this.wallet.exists(user);
+      const userExists = await this.wallet.exists(enrollmentId);
       if (userExists) {
-        throw new ConflictException("An identity for this user already exists in the wallet");
+        return generateToken(enrollmentId, this.configService.get<string>('JWT_SECRET'));
       }
   
       // Enroll the user, and import the new identity into the wallet.
       const enrollment = await ca.enroll({
-        enrollmentID: user,
-        enrollmentSecret: secret
+        enrollmentID: enrollmentId,
+        enrollmentSecret: enrollmentSecret
       });
       const identity = X509WalletMixin.createIdentity(
-        "org1msp",
+        this.configService.get<string>('MSP_ID'),
         enrollment.certificate,
         enrollment.key.toBytes()
       );
-      await this.wallet.import(user, identity);
+      await this.wallet.import(enrollmentId, identity);
   
-      return `Successfully enrolled user ${user} and imported it into the wallet`;
+      return generateToken(enrollmentId, this.configService.get<string>('JWT_SECRET'));
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      throw new InternalServerErrorException(error.message);
     }
   }
 
-  async revoke(user) {
+  async revoke(user: IUserType, enrollmentId: string) {
+    // Check If Actor is Admin
+    if (user.enrollmentId !== 'admin') {
+      throw new UnauthorizedException(`An identity for the user ${user.enrollmentId} is not the admin of the network`);
+    }
+
+    // Check to see if we've already enrolled the admin user.
+    const userExists = await this.wallet.exists(user.enrollmentId);
+    if (!userExists) {
+      throw new NotFoundException(`An identity for the user ${user.enrollmentId} does not exist in the wallet`);
+    }
+
     try {  
-      // Check to see if we've already enrolled the admin user.
-      const adminExists = await this.wallet.exists("admin");
-      if (!adminExists) {
-        throw new NotFoundException('An identity for the admin user "admin" does not exist in the wallet');
-      }
-  
       // Use admin credentials connect to our peer node.
       await this.gateway.connect(ccp, {
         wallet: this.wallet,
-        identity: "admin",
+        identity: user.enrollmentId,
         discovery: { enabled: true, asLocalhost: true }
       });
   
@@ -117,21 +127,17 @@ export class UsersService {
       const ca = this.gateway.getClient().getCertificateAuthority();
       const adminIdentity = this.gateway.getCurrentIdentity();
   
-      // Register the user, enroll the user, and import the new identity into the wallet.
+      // Revoke User.
       await ca.revoke(
-        {
-          enrollmentID: user,
-          // enrollmentSecret: secret,
-          // maxEnrollments: -1
-        },
+        { enrollmentID: enrollmentId },
         adminIdentity
       );
   
-      await this.wallet.delete(user);
+      await this.wallet.delete(enrollmentId);
   
-      return `Successfully revoked user ${user}`;
+      return `Successfully revoked user ${enrollmentId}`;
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      throw new InternalServerErrorException(error.message);
     }
   }
 }
