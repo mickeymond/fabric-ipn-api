@@ -27,7 +27,7 @@ export class CopyrightsService {
       await this.gateway.connect(ccp, {
         wallet: this.wallet,
         identity: user.enrollmentId,
-        discovery: { enabled: true, asLocalhost: true }
+        discovery: { enabled: false, asLocalhost: false }
       });
   
       // Get the network channel that the smart contract is deployed to.
@@ -57,7 +57,7 @@ export class CopyrightsService {
       await gateway.connect(ccp, {
         wallet: this.wallet,
         identity: user.enrollmentId,
-        discovery: { enabled: true, asLocalhost: true }
+        discovery: { enabled: false, asLocalhost: false }
       });
   
       // Get the network channel that the smart contract is deployed to.
@@ -84,7 +84,7 @@ export class CopyrightsService {
       await gateway.connect(ccp, {
         wallet: this.wallet,
         identity: user.enrollmentId,
-        discovery: { enabled: true, asLocalhost: true }
+        discovery: { enabled: false, asLocalhost: false }
       });
   
       // Get the network channel that the smart contract is deployed to.

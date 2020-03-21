@@ -48,7 +48,7 @@ export class UsersService {
       await this.gateway.connect(ccp, {
         wallet: this.wallet,
         identity: "admin",
-        discovery: { enabled: true, asLocalhost: true }
+        discovery: { enabled: false, asLocalhost: false }
       });
   
       // Get the CA client object from the gateway for interacting with the CA.
@@ -120,7 +120,7 @@ export class UsersService {
       await this.gateway.connect(ccp, {
         wallet: this.wallet,
         identity: user.enrollmentId,
-        discovery: { enabled: true, asLocalhost: true }
+        discovery: { enabled: false, asLocalhost: false }
       });
   
       // Get the CA client object from the gateway for interacting with the CA.
